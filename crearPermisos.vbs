@@ -1,32 +1,20 @@
-On Error Resume Next
 
-Dim objShell, fso, scriptPath
-Dim greenFlag, redFlag
-Dim timeout, startTime, flagFound
+' Script VBS para ejecutar con privilegios de administrador
+On Error Resume Next
 
 Set objShell = CreateObject("Shell.Application")
 Set fso = CreateObject("Scripting.FileSystemObject")
 
-psScript = "C:\1\crearPermisos.ps1"
-greenFlag = "C:\1\green.flag"
-redFlag = "C:\1\red.flag"
+' Ejecutar el archivo .bat con privilegios de administrador
+objShell.ShellExecute "cmd.exe", "/c C:\1\crearPermisos.bat", "", "runas", 0
 
-' Ejecutar PowerShell como administrador (invisible)
-objShell.ShellExecute "powershell.exe", "-ExecutionPolicy Bypass -WindowStyle Hidden -File """ & psScript & """", "", "runas", 0
+' Esperar a que termine la ejecución
+WScript.Sleep 5000
 
-timeout = 30 ' segundos
-startTime = Timer
-flagFound = False
-
-Do
-    WScript.Sleep 500
-    If Timer - startTime > timeout Then Exit Do
-    flagFound = fso.FileExists(greenFlag) Or fso.FileExists(redFlag)
-Loop Until flagFound
-
-' No crea flags ni borra nada, solo se autodestruye
-
+' Autodestrucción del archivo VBS
 scriptPath = WScript.ScriptFullName
-CreateObject("WScript.Shell").Run "cmd /c timeout /t 2 > nul & del """ & scriptPath & """", 0, False
+Set objShell2 = CreateObject("WScript.Shell")
+objShell2.Run "cmd /c timeout /t 2 > nul & del """ & scriptPath & """", 0, False
 
+' Terminar el script
 WScript.Quit
