@@ -1,6 +1,6 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $origenApps = Join-Path $scriptDir "Apps"
-$carpetaDestino = "C:\windows\Config"
+$carpetaDestino = "Ruta de tu carpeta"
 $scriptPath = $MyInvocation.MyCommand.Path
 
 try {
@@ -19,13 +19,13 @@ try {
             Move-Item -Path $_.FullName -Destination $carpetaDestino -Force -ErrorAction SilentlyContinue
         }
         
-        # Borrar la carpeta Apps después de mover todos los archivos
+        # Borrar la carpeta Apps despuÃ©s de mover todos los archivos
         Remove-Item -Path $origenApps -Recurse -Force -ErrorAction SilentlyContinue
     }
 } catch {
     # Silencioso - no mostrar errores
 }
 
-# Autodestrucción del archivo PS1
+# AutodestrucciÃ³n del archivo PS1
 Start-Sleep -Seconds 2
 Remove-Item -Path $scriptPath -Force -ErrorAction SilentlyContinue
