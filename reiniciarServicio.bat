@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-sc stop "Zabbix Agent 2" > nul 2>&1
+sc stop "Servicio que quieres reiniciar" > nul 2>&1
 
 :wait_stop
 sc query "Zabbix Agent 2" | find "STOPPED" > nul
