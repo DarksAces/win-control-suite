@@ -1,29 +1,65 @@
-# Scripts de Gestión de Servicios y Permisos en Windows
+# Scripts de Automatización para Windows  
+**Windows Automation Scripts**
 
-Este repositorio contiene scripts en PowerShell y VBScript para automatizar tareas comunes en sistemas Windows, específicamente para:
+Este conjunto de scripts permite automatizar tareas administrativas en sistemas Windows. Están diseñados para facilitar despliegues, configuraciones y mantenimientos sin intervención manual repetitiva.
 
-- Crear carpetas y asignar permisos de forma dinámica al grupo adecuado ("Usuarios" o "Users").
-- Reiniciar servicios de Windows de forma silenciosa y segura.
-- Manejar flags de estado (`green.flag` y `red.flag`) para verificar si la operación fue exitosa o fallida.
-- Autodestrucción de los scripts después de la ejecución para mantener el sistema limpio.
-- Ejecución sin ventanas emergentes ni mensajes para una experiencia totalmente silenciosa.
+This set of scripts automates administrative tasks on Windows systems. They simplify deployments, configurations, and maintenance with minimal manual effort.
 
 ---
 
-## Contenido
+## 🧩 Funcionalidades / Features
 
-- `crearPermisos.ps1` - Script PowerShell que crea la carpeta `C:\Windows\config`, asigna permisos completos al grupo "Usuarios" o "Users" y crea un flag indicando éxito o error.
-- `crearPermisos.vbs` - Script VBScript para ejecutar `crearPermisos.ps1` con privilegios de administrador y oculto, que luego se autodestruye.
-- `reiniciarServicio.ps1` - Script PowerShell para reiniciar el servicio "Zabbix Agent 2", creando un flag de estado según el resultado y autodestruyéndose.
-- `reiniciarServicio.vbs` - Script VBScript para ejecutar el script PowerShell anterior con privilegios de administrador y en modo oculto, que también se autodestruye.
+- Creación de carpetas estructuradas  
+  Structured folder creation
+
+- Asignación automática de permisos  
+  Automated permission assignment
+
+- Despliegue/movimiento de aplicaciones  
+  Application deployment/movement
+
+- Reinicio controlado de servicios del sistema  
+  Controlled restart of system services
 
 ---
 
-## Uso
+## 📂 Ubicación de los scripts / Script Location
 
-1. Coloca los scripts en la carpeta `C:\1\`.
-2. Ejecuta los archivos `.vbs` correspondientes para lanzar los scripts PowerShell con permisos elevados y sin mostrar ventanas.
-   
-   Por ejemplo, para crear permisos:
-   ```shell
-   C:\1\crearPermisos.vbs
+Puedes colocar los scripts en cualquier carpeta del sistema. Se recomienda usar una ruta estándar (como `C:\1\script`) para facilitar la organización, pero no es obligatorio.
+
+You can place the scripts in any folder on the system. Using a standard path (such as `C:\1\script`) is recommended for consistency, but not required.
+
+> ⚠️ Asegúrate de que las rutas internas estén configuradas correctamente en los scripts si cambias su ubicación.  
+> ⚠️ Make sure internal paths are configured correctly in the scripts if you change their location.
+
+---
+
+## ▶️ Ejecución / Execution
+
+Ejecutar `launch.bat` con privilegios de administrador.  
+Run `launch.bat` with administrator privileges.
+
+---
+
+## ⚠️ Requisitos / Requirements
+
+- Windows 10, 11 o Server  
+- PowerShell 5.1+  
+- Ejecución de scripts habilitada (`Set-ExecutionPolicy`)  
+- Usuario con permisos elevados  
+
+---
+
+## 🛠️ Personalización / Customization
+
+Puedes adaptar los scripts según tus necesidades cambiando:
+- Rutas y nombres de carpetas
+- Servicios a reiniciar
+- Usuarios y grupos para permisos
+- Aplicaciones a mover o reinstalar
+
+You can customize the scripts by modifying:
+- Paths and folder names  
+- Services to restart  
+- Users and groups for permissions  
+- Applications to move or reinstall
