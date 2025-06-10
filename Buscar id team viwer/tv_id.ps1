@@ -6,48 +6,54 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 
 # Configuración: ruta del archivo de configuración Zabbix
 $configPaths = @(
-    "C:\windows\idenPC.cfg",  # Asegurarse de que esta ruta esté incluida
-    "C:\zabbix_agentd.conf",
-    "C:\Program Files\Zabbix Agent\zabbix_agentd.conf",
-    "C:\Program Files (x86)\Zabbix Agent\zabbix_agentd.conf",
-    "C:\ProgramData\zabbix_agentd.conf"
+    "C:\windows\idenPC.cfg" # Asegurarse de que esta ruta esté incluida
 )
 
-# Rutas posibles para TeamViewer en registro
-$teamViewerPaths = @(
-    'HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\TeamViewer',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer\Version15',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer\Version14',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer\Version13',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer\Version12',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\TeamViewer\Version15',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\TeamViewer\Version14',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\TeamViewer\Version13',
-    'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\TeamViewer\Version12'
-)
-
-# Buscar ruta válida para ClientID en registro
-$validPath = $null
-foreach ($path in $teamViewerPaths) {
-    try {
-        $result = reg query "$path" /v ClientID 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            $validPath = $path
-            break
+# Función para buscar TeamViewer dinámicamente en el registro
+function Find-TeamViewerPath {
+    $basePaths = @(
+        'HKEY_LOCAL_MACHINE\SOFTWARE',
+        'HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node'
+    )
+    
+    foreach ($basePath in $basePaths) {
+        try {
+            # Buscar carpeta TeamViewer directamente
+            $teamViewerPath = "$basePath\TeamViewer"
+            $result = reg query "$teamViewerPath" /v ClientID 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                return $teamViewerPath
+            }
+            
+            # Buscar versiones específicas de TeamViewer
+            $teamViewerQuery = reg query "$basePath" /k 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                $subKeys = $teamViewerQuery | Where-Object { $_ -match "TeamViewer" }
+                foreach ($subKey in $subKeys) {
+                    if ($subKey -match "HKEY_LOCAL_MACHINE\\.*\\(TeamViewer.*)") {
+                        $fullPath = "$basePath\$($matches[1])"
+                        $result = reg query "$fullPath" /v ClientID 2>$null
+                        if ($LASTEXITCODE -eq 0) {
+                            return $fullPath
+                        }
+                    }
+                }
+            }
+        }
+        catch {
+            continue
         }
     }
-    catch {
-        continue
-    }
+    
+    # Si no encuentra nada, devolver ruta por defecto
+    return 'HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer'
 }
 
-# Construir línea UserParameter
-if ($validPath) {
-    $userParameterLine = "User Parameter=dosi.tw,reg query `"$validPath`" /v ClientID"
-} else {
-    $userParameterLine = 'User Parameter=dosi.tw,reg query "HKEY_LOCAL_MACHINE\SOFTWARE\TeamViewer" /v ClientID'
-}
+# Buscar ruta válida para ClientID en registro
+$validPath = Find-TeamViewerPath
+
+# Construir línea UserParameter (corregido el formato)
+$userParameterLine = "UserParameter=dosi.tw,reg query `"$validPath`" /v ClientID"
 
 # Buscar primer archivo válido y añadir línea si no existe
 $archivoModificado = $false
@@ -55,6 +61,10 @@ foreach ($configPath in $configPaths) {
     if (Test-Path $configPath) {
         $content = Get-Content $configPath -Raw -ErrorAction SilentlyContinue
         if ($content -notmatch [regex]::Escape($userParameterLine)) {
+            # Asegurar que hay un salto de línea antes de añadir
+            if ($content -and -not $content.EndsWith("`n") -and -not $content.EndsWith("`r`n")) {
+                Add-Content -Path $configPath -Value "" -Encoding UTF8 -ErrorAction SilentlyContinue
+            }
             Add-Content -Path $configPath -Value $userParameterLine -Encoding UTF8 -ErrorAction SilentlyContinue
         }
         $archivoModificado = $true
@@ -73,7 +83,6 @@ if (-not $archivoModificado) {
 }
 
 # --- Autodestrucción ---
-
 $vbsScript = @"
 WScript.Sleep 2000
 Set fso = CreateObject(""Scripting.FileSystemObject"")
@@ -85,7 +94,5 @@ On Error Goto 0
 
 $tempVbs = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".vbs")
 Set-Content -Path $tempVbs -Value $vbsScript -Encoding ASCII
-
 Start-Process -FilePath "cscript.exe" -ArgumentList "//nologo `"$tempVbs`"" -WindowStyle Hidden
-
 exit
